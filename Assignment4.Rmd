@@ -56,6 +56,53 @@ train = permID[1:nt];            # ids/row numbers of the training observations
 test  = permID[(nt+1):n];        # ids/row numbers of the test observations
 \end{verbatim}
 
+library(ISLR)
+data(Auto)
+library(MASS)
+
+#Q14
+#a)
+mpg01 <- ifelse(Auto$mpg > median(Auto$mpg), 1, 0)
+Auto <- data.frame(Auto, mpg01)
+
+#b)
+
+# Features to compare (exclude mpg itself)
+vars <- setdiff(names(Auto), c("mpg", "mpg01","name"))
+
+# Boxplots
+par(mfrow=c(2,4))
+for (v in vars) {
+  boxplot(Auto[[v]] ~ Auto$mpg01, main=v, xlab="mpg01", ylab=v)
+}
+
+# Scatterplots
+par(mfrow=c(2,4))  
+for (v in vars) {
+  plot(Auto$mpg01, Auto[[v]], main=v, xlab="mpg01", ylab=v)
+}
+
+#c)
+set.seed(1)
+train <- sample(1:nrow(Auto), nrow(Auto)/2)
+
+#d)
+lda.fit <- lda(mpg01 ~ cylinders+displacement+weight, data=Auto, subset=train)
+lda.pred <- predict(lda.fit, Auto[-train, ])$class
+mean(lda.pred != Auto$mpg01[-train])
+
+#e)
+qda.fit <- qda(mpg01 ~ cylinders+displacement+weight, data=Auto, subset=train)
+qda.pred <- predict(qda.fit, Auto[-train, ])$class
+mean(qda.pred != Auto$mpg01[-train])
+
+#f)
+glm.fit <- glm(mpg01 ~ cylinders+displacement+weight, data=Auto, subset=train, family=binomial)
+glm.probs <- predict(glm.fit, Auto[-train, ], type="response")
+glm.pred <- ifelse(glm.probs > 0.5, 1, 0)
+mean(glm.pred != Auto$mpg01[-train])
+
+
 \bigskip
 
 \textbf{Typed Problem 1.}
@@ -100,5 +147,6 @@ D2: quadratic discriminant analysis
 (Optional): try to visualize the decision boundaries, particularly for L2 and D2. To do so, you can setup a grid of equally spaced points (e.g., use $m\approx 50$ points per dimension and $m^2\approx 50^2$ points total; if necessary, increase $m$ to about $100$; use small markers/dots as in the lectures) and color those with respect to the corresponding predicted classes.
 
 Note: in this problem, we pool "train" and "valid" sets and use those for training because the classifiers do not have extra tuning parameters that require additional calibration (and all model parameters are estimated statistically). In later chapters, we'll see that this is generally not the case (e.g., we have already seen an example of a NN method where tuning parameter (neighborhood size/radius) needs to be calibrated).
+
 
 
